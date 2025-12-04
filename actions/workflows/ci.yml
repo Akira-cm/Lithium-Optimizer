@@ -1,0 +1,41 @@
+# .github/workflows/ci.yml
+name: Build e Linting do Lithium Optimizer
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build_test:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [ '3.10', '3.11', '3.12' ]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Configurar Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Instalar Dependências
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Testar Compilação com PyInstaller
+      run: |
+        pyinstaller --noconfirm --onefile --windowed --name Lithium_Optimizer optimizer.py
+        
+    - name: Verificação de Arquivo Gerado
+      run: |
+        if (Test-Path dist/Lithium_Optimizer.exe) {
+            echo "::notice file=dist/Lithium_Optimizer.exe::Executável gerado com sucesso."
+        } else {
+            echo "::error::Não foi possível encontrar o executável. Falha na compilação."
+            exit 1
+        }
+      shell: powershell
